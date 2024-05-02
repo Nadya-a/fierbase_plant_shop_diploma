@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "104998893072",
+    "project_id": "fierbase-diploma",
+    "storage_bucket": "fierbase-diploma.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:104998893072:android:4631ff2b2f2e9c5d4abc95",
+        "android_client_info": {
+          "package_name": "com.example.fierbase_diploma"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAfODsSWy_HCHtmknoDJXcfui5NGfVD2R4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
