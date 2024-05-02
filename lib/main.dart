@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+<<<<<<< HEAD
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 
@@ -39,11 +40,22 @@ class _MyHomePageState extends State<MyHomePage> {
   void _incrementCounter() async {
     await Firebase.initializeApp(
         options: const FirebaseOptions(
+=======
+
+import 'exports.dart';
+
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+      options: const FirebaseOptions(
+>>>>>>> 6d076c4 (Initial commit)
         apiKey: 'AIzaSyAfODsSWy_HCHtmknoDJXcfui5NGfVD2R4',
         appId: 'AIzaSyAfODsSWy_HCHtmknoDJXcfui5NGfVD2R4',
         messagingSenderId: '104998893072',
         projectId: 'fierbase-diploma',
         storageBucket: 'fierbase-diploma.appspot.com',
+<<<<<<< HEAD
     )
     );
     FirebaseFirestore.instance.collection('test').doc('doc1').set({'data': 'example'});
@@ -80,3 +92,33 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
+=======
+      )
+  );
+  //createListingsInDatabase();
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: IntroPage(),
+      routes: {
+        '/intropage' : (context) => const IntroPage(),
+        '/menupage' : (context) => MenuPage(),
+      },
+    );
+  }
+}
+
+
+
+//void _incrementCounter() async {
+//     FirebaseFirestore.instance.collection('test').doc('doc1').set({'data': 'example'});
+//
+//   }
+
+>>>>>>> 6d076c4 (Initial commit)
