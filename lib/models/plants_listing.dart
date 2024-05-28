@@ -8,12 +8,22 @@ class PlantsListing {
   final String description;
   final int price;
   final String imageURL;
+  final String documentId;
+  final String speciesId;
+  final String typeId;
+  final String height;
+  final String width;
 
   PlantsListing({
     required this.name,
     required this.description,
     required this.price,
     required this.imageURL,
+    required this.documentId,
+    required this.speciesId,
+    required this.typeId,
+    required this.height,
+    required this.width,
   });
 
   factory PlantsListing.fromJson(Map<String, dynamic> json) {
@@ -22,6 +32,11 @@ class PlantsListing {
       description: json['description'],
       price: json['price'],
       imageURL: json['imageURL'],
+      documentId: json['documentId'],
+      speciesId: json['species_id'],
+      typeId: json['type_id'],
+      width: json['width'],
+      height: json['height'],
     );
   }
 
@@ -31,6 +46,9 @@ class PlantsListing {
       'description': description,
       'price': price,
       'imageURL': imageURL,
+      'documentId': documentId,
+      'species_id': speciesId, // Новое поле
+      'type_id': typeId, // Новое поле
     };
   }
 }
@@ -43,11 +61,11 @@ Future<List<Map<String, dynamic>>> getListings() async {
         .collection('listings')
         .get(); // Получение данных из коллекции "listings"
 
-    querySnapshot.docs.forEach((doc) {
-      // Проход по всем документам в полученной коллекции
+    for (var doc in querySnapshot.docs) {
       Map<String, dynamic> listingData = doc.data() as Map<String, dynamic>;
-      listings.add(listingData); // Добавление данных объявления в список
-    });
+      listingData['documentId'] = doc.id; // Добавление идентификатора документа в данные объявления
+      listings.add(listingData);
+    }
 
     return listings;
   } catch (e) {
@@ -56,52 +74,156 @@ Future<List<Map<String, dynamic>>> getListings() async {
   }
 }
 
-/*void main() {
-  List<PlantsListing> listings = [];
 
-  for (int i = 1; i <= 16; i++) {
-    listings.add(
-      PlantsListing(
-        name: 'Название товара $i',
-        description: 'Описание товара $i',
-        price: 100,
-        imageURL: 'assets/images/ficus.png',
-      ),
-    );
+
+Future<List<Map<String, dynamic>>> getUsersListings(String userId) async {
+  List<Map<String, dynamic>> listings = [];
+
+  try {
+    // Запрашиваем объявления, где в поле 'userId' указан переданный айди пользователя
+    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+        .collection('listings')
+        .where("userID", isEqualTo: userId)
+        .get();
+
+    // Проходим по всем документам в полученной выборке
+    querySnapshot.docs.forEach((doc) {
+      // Получаем данные объявления
+      Map<String, dynamic> listingData = doc.data() as Map<String, dynamic>;
+      listings.add(listingData); // Добавляем данные объявления в список
+    });
+
+    return listings;
   }
 
-  List<Map<String, dynamic>> jsonListings = listings.map((listing) => listing.toJson()).toList();
 
-  String jsonString = jsonEncode(jsonListings);
-  //print(jsonString);
-} */
-
-/*List<Map<String, dynamic>> getListings() {
-  List<PlantsListing> listings = [];
-
-  for (int i = 1; i <= 16; i++) {
-    listings.add(
-      PlantsListing(
-        name: 'Название товара $i',
-        description: 'Описание товара $i',
-        price: 100,
-        imageURL: 'assets/images/ficus.png',
-      ),
-    );
+  catch (e) {
+    print('Error fetching user listings: $e');
+    return []; // В случае ошибки возвращаем пустой список
   }
-
-  List<Map<String, dynamic>> jsonListings = listings.map((listing) => listing.toJson()).toList();
-  return jsonListings;
-} */
-
-void createListingsInDatabase() {
-  final storage = FirebaseStorage.instance;
-  FirebaseFirestore.instance.collection('listings').doc('listing6').set({
-    'name': 'Test',
-    'description': 'Test',
-    'price': 80,
-    'imageURL': 'assets/images/zambaria.jpg',
-  });
-
 }
 
+
+void createListingsInDatabase(String name, String desc, File imageFile, int price, String userID, String speciesId, String typeId,  String height, String width) async {
+  // Проверяем, выбрано ли изображение
+  if (imageFile == null) {
+    print('Ошибка: изображение не выбрано.');
+    return;
+  }
+
+  // Загружаем изображение в Firebase Storage
+  try {
+    // Создаем ссылку на местоположение в Firebase Storage, куда хотим загрузить изображение
+    Reference storageRef = FirebaseStorage.instance.ref().child('listings_images/${DateTime.now().millisecondsSinceEpoch}.jpg');
+
+    // Загружаем изображение
+    await storageRef.putFile(imageFile);
+
+    // Получаем URL загруженного изображения
+    String imageURL = await storageRef.getDownloadURL();
+
+    // Создаем новый документ в коллекции "listings" и получаем его ID
+    DocumentReference newListingRef = FirebaseFirestore.instance.collection('listings').doc();
+
+    // Сохраняем данные в базе данных Firestore
+    await newListingRef.set({
+      'name': name,
+      'description': desc,
+      'price': price,
+      'imageURL': imageURL,
+      'userID': userID,
+      'documentId': newListingRef.id, // Добавляем documentId как отдельное поле
+      'species_id': speciesId, // Добавляем новое поле
+      'type_id': typeId, // Добавляем новое поле
+      'height': height, // Добавляем новое поле
+      'width': width, // Добавляем новое поле
+    });
+
+    print('Объявление успешно добавлено в базу данных.');
+  } catch (e) {
+    print('Ошибка при добавлении объявления в базу данных: $e');
+  }
+}
+
+
+Future<void> createFavoritesInDatabase(String listingId) async {
+  try {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      throw Exception('User not authenticated');
+    }
+
+    String userId = user.uid;
+    DocumentReference userFavoritesRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('favorites')
+        .doc(listingId);
+
+    DocumentSnapshot docSnapshot = await userFavoritesRef.get();
+
+    if (docSnapshot.exists) {
+      await userFavoritesRef.delete();
+    } else {
+      await userFavoritesRef.set({'listingId': listingId});
+    }
+  } catch (e) {
+    print('Error toggling favorite in database: $e');
+  }
+}
+
+
+
+Future<List<Map<String, dynamic>>> fetchFavoritesFromDatabase() async {
+  User? user = FirebaseAuth.instance.currentUser;
+  if (user == null) return [];
+
+  String userId = user.uid;
+  final userFavoritesRef = FirebaseFirestore.instance
+      .collection('users')
+      .doc(userId)
+      .collection('favorites');
+
+  QuerySnapshot querySnapshot = await userFavoritesRef.get();
+  List<String> favoriteIds = querySnapshot.docs.map((doc) => doc.id).toList();
+
+  List<Map<String, dynamic>> favorites = [];
+  for (String id in favoriteIds) {
+    DocumentSnapshot listingSnapshot = await FirebaseFirestore.instance
+        .collection('listings')
+        .doc(id)
+        .get();
+
+    if (listingSnapshot.exists) {
+      Map<String, dynamic>? listingData = listingSnapshot.data() as Map<String, dynamic>?;
+      if (listingData != null) {
+        listingData['documentId'] = listingSnapshot.id;
+        favorites.add(listingData);
+      }
+    }
+  }
+
+  return favorites;
+}
+
+Future<void> toggleFavorite(String listingId) async {
+  User? user = FirebaseAuth.instance.currentUser;
+  if (user == null) {
+    throw Exception('User not authenticated');
+  }
+
+  String userId = user.uid;
+  DocumentReference userFavoritesRef = FirebaseFirestore.instance
+      .collection('users')
+      .doc(userId)
+      .collection('favorites')
+      .doc(listingId);
+
+  DocumentSnapshot docSnapshot = await userFavoritesRef.get();
+
+  if (docSnapshot.exists) {
+    await userFavoritesRef.delete();
+  } else {
+    await userFavoritesRef.set({'listingId': listingId});
+  }
+}

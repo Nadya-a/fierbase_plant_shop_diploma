@@ -30,6 +30,7 @@ dependencies:
   firebase_storage: ^11.6.9
 >>>>>>> 6d076c4 (Initial commit)
   http:
+  image_picker:
 
 dev_dependencies:
   flutter_test:

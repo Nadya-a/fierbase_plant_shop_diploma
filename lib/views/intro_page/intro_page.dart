@@ -60,10 +60,23 @@ class IntroPage extends StatelessWidget {
                     Navigator.pushNamed(context, '/menupage');
                 },
               ),
+
+              MyButton(
+                text: "Sign In",
+                onTap: () async {
+                  goToLogin(context);
+                },
+              )
             ]
         ),
       ),
     );
   }
 
+
+
+  goToLogin(BuildContext context) => Navigator.push(
+    context,
+    MaterialPageRoute(builder: (context) => const LoginScreen()),
+  );
 }

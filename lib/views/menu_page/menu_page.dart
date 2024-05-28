@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../../exports.dart';
 
 class MenuPage extends StatefulWidget {
@@ -8,9 +7,11 @@ class MenuPage extends StatefulWidget {
   @override
   State<MenuPage> createState() => _MenuPageState();
 }
+
 class _MenuPageState extends State<MenuPage> {
-  late List<Map<String, dynamic>> listings;
-  bool isLoading = true;
+  List<Map<String, dynamic>> _listings = [];
+  List<Map<String, dynamic>> favorites = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -21,68 +22,99 @@ class _MenuPageState extends State<MenuPage> {
   Future<void> _fetchListings() async {
     try {
       List<Map<String, dynamic>> fetchedListings = await getListings();
+      List<Map<String,
+          dynamic>> favoriteListings = await fetchFavoritesFromDatabase();
+
+      // Обновляем состояние с полученными данными
       setState(() {
-        listings = fetchedListings;
-        isLoading = false; // Устанавливаем isLoading в false после загрузки данных
+        _listings = fetchedListings.map((listing) {
+          listing['isFavorite'] =
+              favoriteListings.any((favorite) => favorite['documentId'] ==
+                  listing['documentId']);
+          return listing;
+        }).toList();
+        favorites = favoriteListings;
+        _isLoading = false;
       });
     } catch (e) {
       print('Error fetching listings: $e');
       setState(() {
-        listings = []; // В случае ошибки присваиваем пустой список
-        isLoading = false; // Устанавливаем isLoading в false в случае ошибки
+        _listings = [];
+        favorites = [];
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _toggleFavorite(String listingId) async {
+    setState(() {
+      _listings = _listings.map((listing) {
+        if (listing['documentId'] == listingId) {
+          listing['isFavorite'] = !(listing['isFavorite'] ?? false);
+        }
+        return listing;
+      }).toList();
+    });
+
+    try {
+      await toggleFavorite(listingId);
+    } catch (e) {
+      print('Error toggling favorite: $e');
+      setState(() {
+        _listings = _listings.map((listing) {
+          if (listing['documentId'] == listingId) {
+            listing['isFavorite'] = !(listing['isFavorite'] ?? false);
+          }
+          return listing;
+        }).toList();
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: backgroundWhite,
-      appBar: AppBar(
-        title: Text('Каталог магазина'),
-        backgroundColor: backgroundGreen,
-      ),
-      body:  isLoading?
-      Center(
-        child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(backgroundGreen),
+    return BasePage(
+      selectedIndex: 0,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Объявления'),
+          backgroundColor: backgroundGreen,
         ),
-      )
-
-      :Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Поиск...',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.0),
-                ),
-              ),
-            ),
+        body: _isLoading
+            ? Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(backgroundGreen),
           ),
-          Expanded(
-            child: GridView.count(
-              crossAxisCount: 2,//количество элементов в сетке на кросс-оси (горизонтальной оси в случае GridView.count).
-              crossAxisSpacing: 8.0,//ространство между элементами на кросс-оси в пикселях
-              mainAxisSpacing: 8.0,//пространство между элементами на основной оси (вертикальной оси)
-              childAspectRatio: 0.79, // задает отношение ширины карточки к её высоте. 0.7 задает ширину карточки в 70% от её высоты
-              children: List.generate(
-                listings.length, // Используем widget.listings для доступа к списку listings
-                    (index) {
-                  return PlantCard(
-                    name: listings[index]['name'],
-                    description: listings[index]['description'],
-                    imageURL: listings[index]['imageURL'],
-                    price: listings[index]['price'],
-                  );
-                },
-              ),
-            ),
+        )
+            : _listings.isEmpty
+            ? Center(
+          child: Text('Нет доступных объявлений'),
+        )
+            : GridView.builder(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 8.0,
+            mainAxisSpacing: 8.0,
+            childAspectRatio: 0.79,
           ),
-        ],
+          itemCount: _listings.length,
+          itemBuilder: (context, index) {
+            var listing = _listings[index];
+            return PlantCard(
+              name: listing['name'],
+              description: listing['description'],
+              imageURL: listing['imageURL'],
+              documentId: listing['documentId'],
+              price: listing['price'],
+              speciesId: listing['species_id'],
+              typeId: listing['type_id'],
+              height: listing['height'],
+              width: listing['width'],
+              isFavorite: listing['isFavorite'] ?? false,
+              onFavoriteToggle: () => _toggleFavorite(listing['documentId']),
+            );
+          },
+        ),
       ),
     );
   }
