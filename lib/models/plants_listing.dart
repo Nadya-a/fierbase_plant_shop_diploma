@@ -74,6 +74,26 @@ Future<List<Map<String, dynamic>>> getListings() async {
   }
 }
 
+Future<Map<String, dynamic>?> getListingById(String listingId) async {
+  try {
+    DocumentSnapshot docSnapshot = await FirebaseFirestore.instance
+        .collection('listings')
+        .doc(listingId)
+        .get();
+
+    if (docSnapshot.exists) {
+      Map<String, dynamic> listingData = docSnapshot.data() as Map<String, dynamic>;
+      listingData['documentId'] = docSnapshot.id;
+      return listingData;
+    } else {
+      return null; // Возвращаем null, если документ не существует
+    }
+  } catch (e) {
+    print('Error fetching listing: $e');
+    return null; // В случае ошибки возвращаем null
+  }
+}
+
 
 
 Future<List<Map<String, dynamic>>> getUsersListings(String userId) async {
@@ -142,6 +162,61 @@ void createListingsInDatabase(String name, String desc, File imageFile, int pric
     print('Объявление успешно добавлено в базу данных.');
   } catch (e) {
     print('Ошибка при добавлении объявления в базу данных: $e');
+  }
+}
+
+Future<void> updateListingInDatabase(
+    String documentId,
+    String name,
+    String desc,
+    File? imageFile,
+    String price,
+    String speciesId,
+    String typeId,
+    String height,
+    String width,
+    ) async {
+  try {
+    int priceInt = int.parse(price);
+    // Обновляем только те поля, которые передаются в аргументах функции
+    Map<String, dynamic> dataToUpdate = {
+      'name': name,
+      'description': desc,
+      'price': priceInt,
+      'species_id': speciesId,
+      'type_id': typeId,
+      'height': height,
+      'width': width,
+    };
+
+    // Проверяем, выбрано ли новое изображение
+    if (imageFile != null) {
+      // Загружаем новое изображение в Firebase Storage
+      Reference storageRef =
+      FirebaseStorage.instance.ref().child('listings_images/${DateTime.now().millisecondsSinceEpoch}.jpg');
+      await storageRef.putFile(imageFile);
+      String imageURL = await storageRef.getDownloadURL();
+      // Добавляем ссылку на новое изображение в данные для обновления
+      dataToUpdate['imageURL'] = imageURL;
+    }
+
+    // Обновляем объявление в базе данных Firestore
+    await FirebaseFirestore.instance.collection('listings').doc(documentId).update(dataToUpdate);
+  } catch (e) {
+    print('Ошибка при обновлении объявления в базе данных: $e');
+  }
+}
+
+Future<void> deleteListingFromDatabase(String documentId) async {
+  try {
+    // Получение ссылки на документ
+    DocumentReference documentRef = FirebaseFirestore.instance.collection('listings').doc(documentId);
+
+    // Удаление документа
+    await documentRef.delete();
+
+  } catch (e) {
+    print('Ошибка при удалении объявления: $e');
   }
 }
 

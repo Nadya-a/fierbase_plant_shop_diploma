@@ -7,10 +7,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   file_selector_windows
   firebase_auth
   firebase_core
-<<<<<<< HEAD
-=======
   firebase_storage
->>>>>>> 6d076c4 (Initial commit)
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST

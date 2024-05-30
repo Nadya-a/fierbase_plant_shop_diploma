@@ -24,6 +24,7 @@ export 'views/listings_pages/my_listings_page/components/listing_card.dart';
 export 'views/listings_pages/add_listing_page/select_species_page/select_species_page.dart';
 export 'views/listings_pages/add_listing_page/select_type_page/select_type_page.dart';
 export 'views/listings_pages/add_listing_page/add_listing_page.dart';
+export 'views/listings_pages/add_listing_page/edit_listing_page.dart';
 
 export 'package:flutter/cupertino.dart';
 
