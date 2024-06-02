@@ -63,6 +63,11 @@ Future<List<Map<String, dynamic>>> getListings(String? typeId, String? speciesId
   try {
     Query query = FirebaseFirestore.instance.collection('listings');
 
+    // Применяем поисковой запрос к запросу
+    // if (searchQuery != null && searchQuery.isNotEmpty && searchQuery != '') {
+    //   query = query.where('name', isGreaterThanOrEqualTo: searchQuery).where('name', isLessThanOrEqualTo: searchQuery + '\uf8ff');
+    // }
+
     // Применяем фильтры к запросу
     if (typeId != null && typeId != '') {
       query = query.where('type_id', isEqualTo: typeId);
