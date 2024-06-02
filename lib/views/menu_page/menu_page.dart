@@ -13,16 +13,20 @@ class _MenuPageState extends State<MenuPage> {
   List<Map<String, dynamic>> favorites = [];
   bool _isLoading = true;
   String _searchQuery = '';
+  late String? typeId = '';
+  late String? speciesId = '';
+  late int? minPrice = 0;
+  late int? maxPrice = 10000000;
 
   @override
   void initState() {
     super.initState();
-    _fetchListings();
+    _fetchListings(typeId, speciesId, minPrice, maxPrice);
   }
 
-  Future<void> _fetchListings() async {
+  Future<void> _fetchListings(String? typeId, String? speciesId, int? minPrice, int? maxPrice) async {
     try {
-      List<Map<String, dynamic>> fetchedListings = await getListings();
+      List<Map<String, dynamic>> fetchedListings = await getListings(typeId, speciesId, minPrice, maxPrice);
       List<Map<String, dynamic>> favoriteListings = await fetchFavoritesFromDatabase();
 
       // Обновляем состояние с полученными данными
@@ -86,17 +90,51 @@ class _MenuPageState extends State<MenuPage> {
       selectedIndex: 0,
       child: Scaffold(
         appBar: AppBar(
-          backgroundColor: backgroundGreen,
-          title: TextField(
-            decoration: InputDecoration(
-              hintText: 'Поиск...',
-              prefixIcon: Icon(Icons.search, color: Colors.white),
-              border: InputBorder.none,
-            ),
-            style: TextStyle(color: Colors.white),
-            onChanged: _updateSearchQuery,
+          automaticallyImplyLeading: false,  // Убирает стрелку "назад"
+          title: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Поиск...',
+                    prefixIcon: Icon(Icons.search, color: Colors.black),
+                    border: InputBorder.none,
+                    filled: true,
+                    fillColor: Colors.grey[200],  // Устанавливает светло-серый фон
+                  ),
+                  style: TextStyle(color: Colors.black),
+                  onChanged: _updateSearchQuery,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(left: 8.0), // Уменьшает расстояние
+                child: IconButton(
+                  icon: Icon(Icons.tune, color: Colors.black),
+                  onPressed: () async {
+                    // Открываем FilterDialog и ждем возвращения выбранных фильтров
+                    final filters = await Navigator.push(context, MaterialPageRoute(builder: (context) => FilterDialog()));
+
+                    // Используем выбранные фильтры
+                    if (filters != null) {
+                      _isLoading = true;
+                      typeId = filters['typeId'];
+                      speciesId = filters['speciesId'];
+                      minPrice = filters['minPrice'];
+                      maxPrice = filters['maxPrice'];
+                      _fetchListings(typeId, speciesId, minPrice, maxPrice);
+                      // Выполните действия с выбранными фильтрами, например, обновление списка объявлений
+                      // Например, вызов метода для обновления списка объявлений с учетом выбранных фильтров
+                      // updateListingsWithFilters(typeId, speciesId, minPrice, maxPrice);
+                    }
+                  },
+                ),
+              ),
+            ],
           ),
         ),
+
+
+
         body: _isLoading
             ? Center(
           child: CircularProgressIndicator(

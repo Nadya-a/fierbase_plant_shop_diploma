@@ -34,17 +34,25 @@ class PlantDetailsPage extends StatefulWidget {
 class _PlantDetailsPageState extends State<PlantDetailsPage> {
   bool isFavorite = false;
   User? user = FirebaseAuth.instance.currentUser;
+  List<Map<String, dynamic>> similarPlants = [];
+  bool isLoadingSimilarPlants = true;
 
   @override
   void initState() {
     super.initState();
     _checkIfFavorite();
+    _fetchSimilarPlants();
   }
 
   Future<void> _checkIfFavorite() async {
     try {
       String? userId = user?.uid;
-      DocumentSnapshot favoriteDoc = await FirebaseFirestore.instance.collection('users').doc(userId).collection('favorites').doc(widget.documentId).get();
+      DocumentSnapshot favoriteDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('favorites')
+          .doc(widget.documentId)
+          .get();
       setState(() {
         isFavorite = favoriteDoc.exists;
       });
@@ -57,22 +65,57 @@ class _PlantDetailsPageState extends State<PlantDetailsPage> {
     try {
       await toggleFavorite(widget.documentId);
       _checkIfFavorite();
-      setState(() {
+      setState(() {});
+    } catch (e) {
+      print('Error toggling favorite: $e');
+    }
+  }
 
-      });
+  Future<void> _toggleFavoriteInRecommend(documentId) async {
+    try {
+      await toggleFavorite(documentId);
+      _checkIfFavorite();
+      setState(() {});
     } catch (e) {
       print('Error toggling favorite: $e');
     }
   }
 
   Future<String> _fetchSpeciesName() async {
-    DocumentSnapshot speciesDoc = await FirebaseFirestore.instance.collection('plants_species').doc(widget.speciesId).get();
+    DocumentSnapshot speciesDoc = await FirebaseFirestore.instance
+        .collection('plants_species')
+        .doc(widget.speciesId)
+        .get();
     return speciesDoc['name'] ?? 'Unknown Species';
   }
 
   Future<String> _fetchTypeName() async {
-    DocumentSnapshot typeDoc = await FirebaseFirestore.instance.collection('plants_types').doc(widget.typeId).get();
+    DocumentSnapshot typeDoc = await FirebaseFirestore.instance
+        .collection('plants_types')
+        .doc(widget.typeId)
+        .get();
     return typeDoc['name'] ?? 'Unknown Type';
+  }
+
+  Future<void> _fetchSimilarPlants() async {
+    try {
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('listings')
+          .where('type_id', isEqualTo: widget.typeId)
+          .limit(4)
+          .get();
+      setState(() {
+        similarPlants = querySnapshot.docs
+            .map((doc) => doc.data() as Map<String, dynamic>)
+            .toList();
+        isLoadingSimilarPlants = false;
+      });
+    } catch (e) {
+      print('Error fetching similar plants: $e');
+      setState(() {
+        isLoadingSimilarPlants = false;
+      });
+    }
   }
 
   @override
@@ -81,12 +124,12 @@ class _PlantDetailsPageState extends State<PlantDetailsPage> {
       selectedIndex: 0,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(widget.name),
           actions: [
             IconButton(
               icon: Icon(
                 isFavorite ? Icons.favorite : Icons.favorite_border,
-                color: isFavorite ? dustyRed : Colors.grey, size: 28.0,
+                color: isFavorite ? dustyRed : Colors.grey,
+                size: 28.0,
               ),
               onPressed: _toggleFavorite,
             ),
@@ -101,20 +144,23 @@ class _PlantDetailsPageState extends State<PlantDetailsPage> {
                 height: 400,
                 child: Image.network(
                   widget.imageURL,
-                  loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+                  loadingBuilder: (BuildContext context, Widget child,
+                      ImageChunkEvent? loadingProgress) {
                     if (loadingProgress == null) {
                       return child;
                     } else {
                       return Center(
                         child: CircularProgressIndicator(
                           value: loadingProgress.expectedTotalBytes != null
-                              ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                              ? loadingProgress.cumulativeBytesLoaded /
+                              loadingProgress.expectedTotalBytes!
                               : null,
                         ),
                       );
                     }
                   },
-                  errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
+                  errorBuilder:
+                      (BuildContext context, Object error, StackTrace? stackTrace) {
                     return const Center(
                       child: Text('Ошибка загрузки изображения'),
                     );
@@ -143,19 +189,24 @@ class _PlantDetailsPageState extends State<PlantDetailsPage> {
                       ),
                     ),
                     SizedBox(width: 8),
-                    // Кнопка "Связаться с продавцом"
                     SizedBox(
                       width: MediaQuery.of(context).size.width,
                       child: ElevatedButton(
                         onPressed: () async {
-                          Map<String, dynamic> result = await createChat(user!.uid, widget.userID, widget.documentId);
+                          Map<String, dynamic> result = await createChat(
+                              user!.uid, widget.userID, widget.documentId);
                           if (result['errorMessage'] != null) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text(result['errorMessage'])),
                             );
                           }
-                          if (result['chatId'] != 'none' && result['chatId'] != null){
-                            DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(widget.userID).get();
+                          if (result['chatId'] != 'none' &&
+                              result['chatId'] != null) {
+                            DocumentSnapshot userDoc = await FirebaseFirestore
+                                .instance
+                                .collection('users')
+                                .doc(widget.userID)
+                                .get();
                             Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -175,7 +226,8 @@ class _PlantDetailsPageState extends State<PlantDetailsPage> {
                           primary: Colors.blue,
                           onPrimary: Colors.white,
                         ),
-                        child: Text('Задать вопрос продавцу',
+                        child: Text(
+                          'Задать вопрос продавцу',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
@@ -183,7 +235,6 @@ class _PlantDetailsPageState extends State<PlantDetailsPage> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 16),
                     const Text(
                       'Характеристики',
@@ -259,7 +310,6 @@ class _PlantDetailsPageState extends State<PlantDetailsPage> {
                               ],
                             ),
                           );
-
                         }
                       },
                     ),
@@ -333,26 +383,26 @@ class _PlantDetailsPageState extends State<PlantDetailsPage> {
                         }
                       },
                     ),
-                  Text.rich(
-                    TextSpan(
-                      children: [
-                        const TextSpan(
-                          text: 'Размер: ',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.black,
+                    Text.rich(
+                      TextSpan(
+                        children: [
+                          const TextSpan(
+                            text: 'Размер: ',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.black,
+                            ),
                           ),
-                        ),
-                        TextSpan(
-                          text: "D${widget.width} H${widget.height}",
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: darkGreyColor,
+                          TextSpan(
+                            text: "D${widget.width} H${widget.height}",
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: darkGreyColor,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
                     const SizedBox(height: 16),
                     const Text(
                       'Описание',
@@ -369,6 +419,55 @@ class _PlantDetailsPageState extends State<PlantDetailsPage> {
                         color: darkGreyColor,
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Похожие растения',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                    isLoadingSimilarPlants
+                        ? Center(
+                      child: CircularProgressIndicator(
+                        valueColor:
+                        AlwaysStoppedAnimation<Color>(backgroundGreen),
+                      ),
+                    )
+                        : similarPlants.isEmpty
+                        ? Center(
+                      child: Text('Нет доступных похожих растений'),
+                    )
+                        : GridView.builder(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 8.0,
+                        mainAxisSpacing: 8.0,
+                        childAspectRatio: 0.79,
+                      ),
+                      itemCount: similarPlants.length,
+                      shrinkWrap: true, // убрать shrinkWrap
+                      physics: NeverScrollableScrollPhysics(), // добавить это, чтобы предотвратить прокрутку
+                      itemBuilder: (context, index) {
+                        var listing = similarPlants[index];
+                        return PlantCard(
+                          name: listing['name'],
+                          description: listing['description'],
+                          imageURL: listing['imageURL'],
+                          documentId: listing['documentId'],
+                          price: listing['price'],
+                          speciesId: listing['species_id'],
+                          typeId: listing['type_id'],
+                          height: listing['height'],
+                          width: listing['width'],
+                          isFavorite: listing['isFavorite'] ?? false,
+                          onFavoriteToggle: () =>
+                              _toggleFavoriteInRecommend(listing['documentId']),
+                          userID: listing['userID'],
+                        );
+                      },
+                    )
+
                   ],
                 ),
               ),

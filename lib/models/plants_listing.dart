@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../exports.dart';
@@ -56,26 +57,41 @@ class PlantsListing {
   }
 }
 
-Future<List<Map<String, dynamic>>> getListings() async {
+Future<List<Map<String, dynamic>>> getListings(String? typeId, String? speciesId, int? minPrice, int? maxPrice) async {
   List<Map<String, dynamic>> listings = [];
 
   try {
-    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-        .collection('listings')
-        .get(); // Получение данных из коллекции "listings"
+    Query query = FirebaseFirestore.instance.collection('listings');
+
+    // Применяем фильтры к запросу
+    if (typeId != null && typeId != '') {
+      query = query.where('type_id', isEqualTo: typeId);
+    }
+    if (speciesId != null && speciesId != '') {
+      query = query.where('species_id', isEqualTo: speciesId);
+    }
+    if (minPrice != null) {
+      query = query.where('price', isGreaterThanOrEqualTo: minPrice);
+    }
+    if (maxPrice != null) {
+      query = query.where('price', isLessThanOrEqualTo: maxPrice);
+    }
+
+    QuerySnapshot querySnapshot = await query.get();
 
     for (var doc in querySnapshot.docs) {
       Map<String, dynamic> listingData = doc.data() as Map<String, dynamic>;
-      listingData['documentId'] = doc.id; // Добавление идентификатора документа в данные объявления
+      listingData['documentId'] = doc.id;
       listings.add(listingData);
     }
 
     return listings;
   } catch (e) {
     print('Error fetching listings: $e');
-    return []; // В случае ошибки возвращаем пустой список
+    return [];
   }
 }
+
 
 Future<Map<String, dynamic>?> getListingById(String listingId) async {
   try {
