@@ -13,6 +13,7 @@ class PlantsListing {
   final String typeId;
   final String height;
   final String width;
+  final String userID;
 
   PlantsListing({
     required this.name,
@@ -24,6 +25,7 @@ class PlantsListing {
     required this.typeId,
     required this.height,
     required this.width,
+    required this.userID,
   });
 
   factory PlantsListing.fromJson(Map<String, dynamic> json) {
@@ -37,6 +39,7 @@ class PlantsListing {
       typeId: json['type_id'],
       width: json['width'],
       height: json['height'],
+      userID: json['userID'],
     );
   }
 

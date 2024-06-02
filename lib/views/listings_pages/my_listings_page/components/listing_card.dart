@@ -22,6 +22,7 @@ Widget buildListingCard(Map<String, dynamic> listing, BuildContext context) {
                   typeId: listing['type_id'],
                   height: listing['height'],
                   width: listing['width'],
+                  userID: listing['userID'],
                 ),
               ),
             );

@@ -38,7 +38,11 @@ class _BasePageState extends State<BasePage> {
         // Переходим на страницу объявлений
         Navigator.pushNamed(context, '/listingspage');
         break;
-      case 4:
+      case 3: // Чаты
+      // Переходим на страницу объявлений
+        Navigator.pushNamed(context, '/chats');
+        break;
+      case 4: //Профиль
         Navigator.pushNamed(context, '/userprofile');
         break;
     // Другие кейсы для других элементов

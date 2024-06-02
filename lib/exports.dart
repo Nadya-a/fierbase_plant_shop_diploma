@@ -26,6 +26,11 @@ export 'views/listings_pages/add_listing_page/select_type_page/select_type_page.
 export 'views/listings_pages/add_listing_page/add_listing_page.dart';
 export 'views/listings_pages/add_listing_page/edit_listing_page.dart';
 
+export 'views/chats_pages/chat_list_page/chat_list_page.dart';
+export 'views/chats_pages/chat_list_page/components/chat_card.dart';
+export 'views/chats_pages/chat_page/chat_page.dart';
+export 'views/chats_pages/chats_controller.dart';
+
 export 'package:flutter/cupertino.dart';
 
 export 'package:firebase_core/firebase_core.dart';
@@ -34,3 +39,4 @@ export 'package:firebase_storage/firebase_storage.dart';
 //export 'package:cloud_firestore/cloud_firestore.dart';
 export 'package:firebase_auth/firebase_auth.dart';
 export 'dart:io';
+

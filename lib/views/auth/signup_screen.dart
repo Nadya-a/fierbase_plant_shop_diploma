@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../../exports.dart';
@@ -185,6 +186,17 @@ class _SignupScreenState extends State<SignupScreen> {
   _signup() async {
     final user =
     await _auth.createUserWithEmailAndPassword(_email.text, _password.text);
+
+    // Ссылка на коллекцию "chats"
+    CollectionReference usersCollection = FirebaseFirestore.instance.collection('users');
+    // Ссылка на новый документ в коллекции "chats"
+    DocumentReference userDoc = usersCollection.doc(user?.uid);
+
+    // Добавляем документ в коллекцию "chats"
+    await userDoc.set({
+      'displayName': _name.text,
+      'useId': user?.uid,
+    });
 
     if (user != null) {
       await user.updateDisplayName(_name.text);

@@ -13,6 +13,7 @@ class PlantCard extends StatelessWidget {
   final String width;
   final bool isFavorite;
   final VoidCallback onFavoriteToggle;
+  final String userID;
 
   const PlantCard({
     required this.name,
@@ -26,6 +27,7 @@ class PlantCard extends StatelessWidget {
     required this.onFavoriteToggle,
     required this.height,
     required this.width,
+    required this.userID,
   });
 
   @override
@@ -46,6 +48,7 @@ class PlantCard extends StatelessWidget {
                 typeId: typeId,
                 height: height,
                 width: width,
+                userID: userID,
               ),
             ),
           );

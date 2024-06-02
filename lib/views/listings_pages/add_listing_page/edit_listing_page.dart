@@ -146,6 +146,7 @@ class _EditListingPageState extends State<EditListingPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 value: _selectedTypeId,
                 items: _types.map((type) {

@@ -12,6 +12,7 @@ class _MenuPageState extends State<MenuPage> {
   List<Map<String, dynamic>> _listings = [];
   List<Map<String, dynamic>> favorites = [];
   bool _isLoading = true;
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -22,15 +23,13 @@ class _MenuPageState extends State<MenuPage> {
   Future<void> _fetchListings() async {
     try {
       List<Map<String, dynamic>> fetchedListings = await getListings();
-      List<Map<String,
-          dynamic>> favoriteListings = await fetchFavoritesFromDatabase();
+      List<Map<String, dynamic>> favoriteListings = await fetchFavoritesFromDatabase();
 
       // Обновляем состояние с полученными данными
       setState(() {
         _listings = fetchedListings.map((listing) {
           listing['isFavorite'] =
-              favoriteListings.any((favorite) => favorite['documentId'] ==
-                  listing['documentId']);
+              favoriteListings.any((favorite) => favorite['documentId'] == listing['documentId']);
           return listing;
         }).toList();
         favorites = favoriteListings;
@@ -71,14 +70,32 @@ class _MenuPageState extends State<MenuPage> {
     }
   }
 
+  void _updateSearchQuery(String newQuery) {
+    setState(() {
+      _searchQuery = newQuery;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    List<Map<String, dynamic>> filteredListings = _listings.where((listing) {
+      return listing['name'].toLowerCase().contains(_searchQuery.toLowerCase());
+    }).toList();
+
     return BasePage(
       selectedIndex: 0,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Объявления'),
           backgroundColor: backgroundGreen,
+          title: TextField(
+            decoration: InputDecoration(
+              hintText: 'Поиск...',
+              prefixIcon: Icon(Icons.search, color: Colors.white),
+              border: InputBorder.none,
+            ),
+            style: TextStyle(color: Colors.white),
+            onChanged: _updateSearchQuery,
+          ),
         ),
         body: _isLoading
             ? Center(
@@ -86,7 +103,7 @@ class _MenuPageState extends State<MenuPage> {
             valueColor: AlwaysStoppedAnimation<Color>(backgroundGreen),
           ),
         )
-            : _listings.isEmpty
+            : filteredListings.isEmpty
             ? Center(
           child: Text('Нет доступных объявлений'),
         )
@@ -97,9 +114,9 @@ class _MenuPageState extends State<MenuPage> {
             mainAxisSpacing: 8.0,
             childAspectRatio: 0.79,
           ),
-          itemCount: _listings.length,
+          itemCount: filteredListings.length,
           itemBuilder: (context, index) {
-            var listing = _listings[index];
+            var listing = filteredListings[index];
             return PlantCard(
               name: listing['name'],
               description: listing['description'],
@@ -112,6 +129,7 @@ class _MenuPageState extends State<MenuPage> {
               width: listing['width'],
               isFavorite: listing['isFavorite'] ?? false,
               onFavoriteToggle: () => _toggleFavorite(listing['documentId']),
+              userID: listing['userID'],
             );
           },
         ),

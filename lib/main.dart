@@ -34,6 +34,7 @@ class MyApp extends StatelessWidget {
         '/listingspage' : (context) => ListingsPage(),
         //'/addlistingpage' : (context) => AddListingPage(),
         '/favorites' : (context) => FavoritesPage(),
+        '/chats' : (context) => ChatListPage(),
       },
     );
   }

@@ -103,6 +103,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
               width: listing['width'],
               isFavorite: true,
               onFavoriteToggle: () => _toggleFavorite(listing['documentId']),
+              userID: listing['userID'],
             );
           },
         ),

@@ -12,6 +12,7 @@ class PlantDetailsPage extends StatefulWidget {
   final String typeId;
   final String height;
   final String width;
+  final String userID;
 
   const PlantDetailsPage({
     required this.name,
@@ -23,6 +24,7 @@ class PlantDetailsPage extends StatefulWidget {
     required this.documentId,
     required this.height,
     required this.width,
+    required this.userID,
   });
 
   @override
@@ -140,6 +142,48 @@ class _PlantDetailsPageState extends State<PlantDetailsPage> {
                         color: Colors.blue,
                       ),
                     ),
+                    SizedBox(width: 8),
+                    // Кнопка "Связаться с продавцом"
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          Map<String, dynamic> result = await createChat(user!.uid, widget.userID, widget.documentId);
+                          if (result['errorMessage'] != null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(result['errorMessage'])),
+                            );
+                          }
+                          if (result['chatId'] != 'none' && result['chatId'] != null){
+                            DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(widget.userID).get();
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ChatPage(
+                                  chatTitle: userDoc['displayName'],
+                                  otherUserName: userDoc['displayName'],
+                                  listingName: widget.name,
+                                  listingPrice: widget.price,
+                                  listingImageURL: widget.imageURL,
+                                  chatId: result['chatId'],
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          primary: Colors.blue,
+                          onPrimary: Colors.white,
+                        ),
+                        child: Text('Задать вопрос продавцу',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+
                     const SizedBox(height: 16),
                     const Text(
                       'Характеристики',
