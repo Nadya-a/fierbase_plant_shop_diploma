@@ -51,10 +51,15 @@ class PlantsListing {
       'price': price,
       'imageURL': imageURL,
       'documentId': documentId,
-      'species_id': speciesId, // Новое поле
-      'type_id': typeId, // Новое поле
+      'species_id': speciesId,
+      'type_id': typeId,
+      'height': height,  // Добавлено
+      'width': width,    // Добавлено
+      'userID': userID,  // Добавлено
     };
   }
+
+  String get features => '$name $description $typeId $speciesId';
 }
 
 Future<List<Map<String, dynamic>>> getListings(String? typeId, String? speciesId, int? minPrice, int? maxPrice) async {

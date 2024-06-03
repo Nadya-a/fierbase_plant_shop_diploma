@@ -99,15 +99,9 @@ class _PlantDetailsPageState extends State<PlantDetailsPage> {
 
   Future<void> _fetchSimilarPlants() async {
     try {
-      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-          .collection('listings')
-          .where('type_id', isEqualTo: widget.typeId)
-          .limit(4)
-          .get();
+      List<Map<String, dynamic>> res = await getRecommendations(widget.documentId);
       setState(() {
-        similarPlants = querySnapshot.docs
-            .map((doc) => doc.data() as Map<String, dynamic>)
-            .toList();
+        similarPlants = res;
         isLoadingSimilarPlants = false;
       });
     } catch (e) {
@@ -421,7 +415,7 @@ class _PlantDetailsPageState extends State<PlantDetailsPage> {
                     ),
                     const SizedBox(height: 16),
                     const Text(
-                      'Похожие растения',
+                      'Ещё может подойти',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
@@ -430,43 +424,42 @@ class _PlantDetailsPageState extends State<PlantDetailsPage> {
                     isLoadingSimilarPlants
                         ? Center(
                       child: CircularProgressIndicator(
-                        valueColor:
-                        AlwaysStoppedAnimation<Color>(backgroundGreen),
-                      ),
+                          valueColor: AlwaysStoppedAnimation<Color>(backgroundGreen)),
                     )
                         : similarPlants.isEmpty
-                        ? Center(
-                      child: Text('Нет доступных похожих растений'),
-                    )
-                        : GridView.builder(
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 8.0,
-                        mainAxisSpacing: 8.0,
-                        childAspectRatio: 0.79,
+                        ? Center(child: Text('Нет доступных похожих растений'))
+                        : SizedBox(
+                      height: 254, // Устанавливаем высоту для прокручиваемого списка
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: similarPlants.length,
+                        itemBuilder: (context, index) {
+                          var listing = similarPlants[index];
+                          return Container(
+                            width: MediaQuery.of(context).size.width / 2, // Устанавливаем ширину для элементов
+                            child: PlantCard(
+                              name: listing['name'],
+                              description: listing['description'],
+                              imageURL: listing['imageURL'],
+                              documentId: listing['documentId'],
+                              price: listing['price'],
+                              speciesId: listing['species_id'],
+                              typeId: listing['type_id'],
+                              // height: "0",
+                              // width: "0",
+                              height: listing['height'],
+                              width: listing['width'],
+                              isFavorite: listing['isFavorite'] ?? false,
+                              onFavoriteToggle: () => _toggleFavoriteInRecommend(listing['documentId']),
+                              userID: listing['userID'],
+                            ),
+                            // child: Text(
+                            //   "${listing['name'] ?? ''} ${listing['description'] ?? ''} ${listing['imageURL']  ?? ''} ${listing['documentId']  ?? ''} ${listing['price'].toString()  ?? ''} ${listing['species_id'] ?? ''} ${listing['type_id']  ?? ''} ${listing['height'] ?? ''} ${listing['width'] ?? ''}",
+                            // ),
+                          );
+                        },
                       ),
-                      itemCount: similarPlants.length,
-                      shrinkWrap: true, // убрать shrinkWrap
-                      physics: NeverScrollableScrollPhysics(), // добавить это, чтобы предотвратить прокрутку
-                      itemBuilder: (context, index) {
-                        var listing = similarPlants[index];
-                        return PlantCard(
-                          name: listing['name'],
-                          description: listing['description'],
-                          imageURL: listing['imageURL'],
-                          documentId: listing['documentId'],
-                          price: listing['price'],
-                          speciesId: listing['species_id'],
-                          typeId: listing['type_id'],
-                          height: listing['height'],
-                          width: listing['width'],
-                          isFavorite: listing['isFavorite'] ?? false,
-                          onFavoriteToggle: () =>
-                              _toggleFavoriteInRecommend(listing['documentId']),
-                          userID: listing['userID'],
-                        );
-                      },
-                    )
+                    ),
 
                   ],
                 ),
