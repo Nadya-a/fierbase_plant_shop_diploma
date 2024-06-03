@@ -30,11 +30,18 @@ class PlantCard extends StatelessWidget {
     required this.userID,
   });
 
+  void _viewListing(String listingId) async {
+    User? user = FirebaseAuth.instance.currentUser;
+    await addViewingHistory(user!.uid, listingId);
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Card(
       child: GestureDetector(
         onTap: () {
+          _viewListing(documentId);
           Navigator.push(
             context,
             MaterialPageRoute(

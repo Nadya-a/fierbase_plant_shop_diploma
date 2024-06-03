@@ -328,6 +328,9 @@ Future<void> toggleFavorite(String listingId) async {
   if (docSnapshot.exists) {
     await userFavoritesRef.delete();
   } else {
-    await userFavoritesRef.set({'listingId': listingId});
+    await userFavoritesRef.set({
+      'listingId': listingId,
+      'addedAt': FieldValue.serverTimestamp(),});
   }
 }
+

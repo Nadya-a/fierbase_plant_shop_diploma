@@ -1,3 +1,4 @@
+import 'package:fierbase_diploma/views/details_page/similar_recommendation_algorithm.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../exports.dart';

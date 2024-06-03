@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../exports.dart';
+import '../menu_page/recommendation_algorithm.dart';
 
 class MenuPage extends StatefulWidget {
   const MenuPage({Key? key}) : super(key: key);
@@ -11,6 +12,7 @@ class MenuPage extends StatefulWidget {
 class _MenuPageState extends State<MenuPage> {
   List<Map<String, dynamic>> _listings = [];
   List<Map<String, dynamic>> favorites = [];
+  List<Map<String, dynamic>> recommendations = [];
   bool _isLoading = true;
   String _searchQuery = '';
   late String? typeId = '';
@@ -22,6 +24,7 @@ class _MenuPageState extends State<MenuPage> {
   void initState() {
     super.initState();
     _fetchListings(typeId, speciesId, minPrice, maxPrice);
+    _fetchRecommendations();
   }
 
   Future<void> _fetchListings(String? typeId, String? speciesId, int? minPrice, int? maxPrice) async {
@@ -29,7 +32,6 @@ class _MenuPageState extends State<MenuPage> {
       List<Map<String, dynamic>> fetchedListings = await getListings(typeId, speciesId, minPrice, maxPrice);
       List<Map<String, dynamic>> favoriteListings = await fetchFavoritesFromDatabase();
 
-      // Обновляем состояние с полученными данными
       setState(() {
         _listings = fetchedListings.map((listing) {
           listing['isFavorite'] =
@@ -46,6 +48,21 @@ class _MenuPageState extends State<MenuPage> {
         favorites = [];
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _fetchRecommendations() async {
+    try {
+      String? userId = FirebaseAuth.instance.currentUser?.uid; // Метод для получения текущего userId
+      List<String> activityIds = await fetchUserActivities(userId!);
+      print(activityIds);
+      List<Map<String, dynamic>> fetchedRecommendations = await getRecommendations(activityIds);
+
+      setState(() {
+        recommendations = fetchedRecommendations;
+      });
+    } catch (e) {
+      print('Error fetching recommendations: $e');
     }
   }
 
@@ -90,7 +107,7 @@ class _MenuPageState extends State<MenuPage> {
       selectedIndex: 0,
       child: Scaffold(
         appBar: AppBar(
-          automaticallyImplyLeading: false,  // Убирает стрелку "назад"
+          automaticallyImplyLeading: false, // Убирает стрелку "назад"
           title: Row(
             children: [
               Expanded(
@@ -100,7 +117,7 @@ class _MenuPageState extends State<MenuPage> {
                     prefixIcon: Icon(Icons.search, color: Colors.black),
                     border: InputBorder.none,
                     filled: true,
-                    fillColor: Colors.grey[200],  // Устанавливает светло-серый фон
+                    fillColor: Colors.grey[200], // Устанавливает светло-серый фон
                   ),
                   style: TextStyle(color: Colors.black),
                   onChanged: _updateSearchQuery,
@@ -122,9 +139,6 @@ class _MenuPageState extends State<MenuPage> {
                       minPrice = filters['minPrice'];
                       maxPrice = filters['maxPrice'];
                       _fetchListings(typeId, speciesId, minPrice, maxPrice);
-                      // Выполните действия с выбранными фильтрами, например, обновление списка объявлений
-                      // Например, вызов метода для обновления списка объявлений с учетом выбранных фильтров
-                      // updateListingsWithFilters(typeId, speciesId, minPrice, maxPrice);
                     }
                   },
                 ),
@@ -132,9 +146,6 @@ class _MenuPageState extends State<MenuPage> {
             ],
           ),
         ),
-
-
-
         body: _isLoading
             ? Center(
           child: CircularProgressIndicator(
@@ -145,31 +156,97 @@ class _MenuPageState extends State<MenuPage> {
             ? Center(
           child: Text('Нет доступных объявлений'),
         )
-            : GridView.builder(
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 8.0,
-            mainAxisSpacing: 8.0,
-            childAspectRatio: 0.79,
-          ),
-          itemCount: filteredListings.length,
-          itemBuilder: (context, index) {
-            var listing = filteredListings[index];
-            return PlantCard(
-              name: listing['name'],
-              description: listing['description'],
-              imageURL: listing['imageURL'],
-              documentId: listing['documentId'],
-              price: listing['price'],
-              speciesId: listing['species_id'],
-              typeId: listing['type_id'],
-              height: listing['height'],
-              width: listing['width'],
-              isFavorite: listing['isFavorite'] ?? false,
-              onFavoriteToggle: () => _toggleFavorite(listing['documentId']),
-              userID: listing['userID'],
-            );
-          },
+            : Column(
+          children: [
+            SizedBox(height: 8,),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Text(
+                  'Рекомендации для вас',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+            ),
+            // Блок рекомендаций
+            SizedBox(
+              height: 254, // Устанавливаем высоту для прокручиваемого списка
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: recommendations.length,
+                itemBuilder: (context, index) {
+                  var listing = recommendations[index];
+                  return Container(
+                    width: MediaQuery.of(context).size.width / 2, // Устанавливаем ширину для элементов
+                    child: PlantCard(
+                      name: listing['name'],
+                      description: listing['description'],
+                      imageURL: listing['imageURL'],
+                      documentId: listing['documentId'],
+                      price: listing['price'],
+                      speciesId: listing['species_id'],
+                      typeId: listing['type_id'],
+                      height: listing['height'],
+                      width: listing['width'],
+                      isFavorite: listing['isFavorite'] ?? false,
+                      onFavoriteToggle: () => _toggleFavorite(listing['documentId']),
+                      userID: listing['userID'],
+                    ),
+                  );
+                },
+              ),
+            ),
+            SizedBox(height: 8,),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Text(
+                  'Все объявления',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+            ),
+            // Основной список объявлений
+            Expanded(
+
+              child: GridView.builder(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 8.0,
+                  mainAxisSpacing: 8.0,
+                  childAspectRatio: 0.79,
+                ),
+                itemCount: filteredListings.length,
+                itemBuilder: (context, index) {
+                  var listing = filteredListings[index];
+                  return PlantCard(
+                    name: listing['name'],
+                    description: listing['description'],
+                    imageURL: listing['imageURL'],
+                    documentId: listing['documentId'],
+                    price: listing['price'],
+                    speciesId: listing['species_id'],
+                    typeId: listing['type_id'],
+                    height: listing['height'],
+                    width: listing['width'],
+                    isFavorite: listing['isFavorite'] ?? false,
+                    onFavoriteToggle: () => _toggleFavorite(listing['documentId']),
+                    userID: listing['userID'],
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );

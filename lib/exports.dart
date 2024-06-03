@@ -16,11 +16,11 @@ export 'views/favorites_page/favorites_page.dart';
 export 'views/user_profile_page/user_profile.dart';
 
 export 'views/menu_page/menu_page.dart';
-export 'views/menu_page/filter_dialog.dart';
+export 'models/viewing_history.dart';
+export 'views/menu_page/components/filter_dialog.dart';
 export 'models/plants_listing.dart';
 export 'views/menu_page/components/plant_card.dart';
 export 'views/details_page/details_page.dart';
-export 'views/details_page/recommendation_algorythm.dart';
 export 'views/listings_pages/my_listings_page/my_listings_page.dart';
 export 'views/listings_pages/my_listings_page/components/listing_card.dart';
 
