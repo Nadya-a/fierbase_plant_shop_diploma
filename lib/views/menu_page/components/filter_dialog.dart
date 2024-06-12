@@ -128,7 +128,20 @@ class _FilterDialogState extends State<FilterDialog> {
                   'maxPrice': _maxPrice,
                 });
               },
-              child: Text('Применить фильтры'),
+              style: ElevatedButton.styleFrom(
+                primary: backgroundGreen, // меняем цвет фона кнопки
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(40),
+                ),
+              ),
+              child: Text(
+                'Применить фильтры',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                ),
+              ),
             ),
           ],
         ),

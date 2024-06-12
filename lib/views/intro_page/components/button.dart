@@ -18,7 +18,10 @@ class MyButton extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-            color: buttonPink, borderRadius: BorderRadius.circular(40)),
+          color: buttonPink,
+          border: Border.all(color: Colors.black45, width: 1.0), // добавляем белую границу
+          borderRadius: BorderRadius.circular(40),
+        ),
         padding: EdgeInsets.all(10),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
